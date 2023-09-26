@@ -1,19 +1,67 @@
 const express = require('express');
 const morgan = require('morgan');
+const mongoose = require('mongoose');
+const Blog = require('./models/blog');
+const { result } = require('lodash');
 // express app
 const app = express();
 
+// connect to mongodb
+const dbURI =
+  'mongodb+srv://Ishika:Ishu2203@cluster0.7j1pp7a.mongodb.net/database1?retryWrites=true&w=majority&appName=AtlasApp';
+mongoose
+  .connect(dbURI)
+  .then((result) => app.listen(3000))
+  .catch((err) => console.log(err));
 // register view engine
 app.set('view engine', 'ejs');
-
-// listen for requests
-app.listen(3000);
 
 // MIDDLEWARE AND STATIC FILES
 app.use(express.static('public'));
 
 // THIRD PARTY MIDDLEWARE
 app.use(morgan('dev'));
+
+// MONGOOSE AND MONGO SANDBOX ROUTES
+app.get('/add-blog', (req, res) => {
+  const blog = new Blog({
+    // title: 'blog1',
+    // snippet: 'how to make shahi paneer',
+    // body: 'step1.....step2...step3....',
+    title: 'blog2',
+    snippet: 'how to make modak',
+    body: 'step1.....step2...step3....',
+  });
+
+  blog
+    .save()
+    .then((result) => {
+      res.send(result);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+});
+
+app.get('/all-blogs', (req, res) => {
+  Blog.find()
+    .then((result) => {
+      res.send(result);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+});
+
+app.get('/single-blog', (req, res) => {
+  Blog.findById('6512b3885c0275d251bb569d')
+    .then((result) => {
+      res.send(result);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+});
 
 // app.use((req, res, next) => {
 //   console.log('new request made:');
@@ -28,23 +76,38 @@ app.use(morgan('dev'));
 //   next();
 // });
 
+// ROUTES
 app.get('/', (req, res) => {
   // res.send('<p> HOME PAGE </p>');
   // res.sendFile('./views/index.html', { root: __dirname });
 
-  const blogs = [
-    { title: `It's a good day`, snippet: 'blah blah blah blah' },
-    { title: `It's raining`, snippet: 'blah blah blah blah' },
-    { title: `different shades of pink`, snippet: 'blah blah blah blah' },
-  ];
+  // const blogs = [
+  //   { title: `It's a good day`, snippet: 'blah blah blah blah' },
+  //   { title: `It's raining`, snippet: 'blah blah blah blah' },
+  //   { title: `different shades of pink`, snippet: 'blah blah blah blah' },
+  // ];
 
-  res.render('index', { title: 'Home', blogs });
+  // res.render('index', { title: 'Home', blogs });
+
+  res.redirect('/blogs');
 });
 
 app.get('/about', (req, res) => {
   // res.send('<p> ABOUT PAGE </p>');
   // res.sendFile('./views/about.html', { root: __dirname });
   res.render('about', { title: 'About' });
+});
+
+// BLOG ROUTES
+app.get('/blogs', (req, res) => {
+  Blog.find()
+    .sort({ createdAt: -1 })
+    .then((result) => {
+      res.render('index', { title: 'All Blogs', blogs: result });
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 });
 
 // redirect
